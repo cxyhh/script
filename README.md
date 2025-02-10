@@ -1,9 +1,10 @@
 ##################main.tcl################
-}elseif {[info exists match_type] && $match_type eq "pass-const"} {
+elseif {[info exists match_type] && $match_type eq "pass-const"} {
   if {$runningFlag ne ""} 
       set msgLine [setUnmatchMsgLine $msgLine "Missing report" "$runningFlag,,$slineNum,,,\"$sunmatchReason\",$testName,,\"$sMessage\"" $oldResultCsvFile]
   } else 
     set msgLine "$msgLine,$matc_type,,,,,,$slineNum,,$sSeverity,,$testName,,\"$sMessage\""
+  }
   }
 ######## diff_ftup############
 proc Diff170-diff27-log#c_optimization-data_const {eToolMsgObj} 

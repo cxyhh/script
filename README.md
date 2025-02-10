@@ -51,7 +51,7 @@ if {$ret}
  if {[dict get $eTolMessageObj msgId] == "SetupDataTiedToConst" && [dict get $sToolMessageObj Rule] == "Clock_info03b"} {
 	if {[false-bit seToolMessageObj $sToolMessageObj]} {
 		dict set sToolMessageObj runningFlag pass-false-bit
-		writeSetupMsgLine ${resultCsvFileName) "" ${sToolMessageObj} ${testName} "pass" ${oldResultcsvFile}
+		writeSetupMsgLine ${resultCsvFileName} "" ${sToolMessageObj} ${testName} "pass" ${oldResultcsvFile}
 		lappend l_s_match_list $s
 		continue
 	}

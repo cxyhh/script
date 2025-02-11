@@ -1,6 +1,4 @@
-
-
-��?################### maq.tc###################
+################## maq.tc###################
 if {$eToolMsgObj eq "" && $sToolMsgObj ne ""} {
 	if {[info exists match_type] && $match_type eq "pass"} {
 		if {$runningFlag ne ""} {

@@ -1,105 +1,68 @@
-################## maq.tc###################
-if {$eToolMsgObj eq "" && $sToolMsgObj ne ""} {
-	if {[info exists match_type] && $match_type eq "pass"} {
-		if {$runningFlag ne ""} {
-			set msgLine "$msgLine,$match_type,,,,$runningFlag,,$slineNum,,$sSeverity,,$testName,,\"$sMessage\""
-		} else {
-			set msgLine "$msgLine,$match_type,,,,,,$slineNum,,$sSeverity,,$testName,,\"$sMessage\""
-		}
-	} elseif {[info exists match_type] && $match_type eq "pass-const"} {
-		if {$runningFlag ne ""} {
-			set msgLine [setUnmatchMsgLine $msgLine "Missing report" "$runningFlag,,$slineNum,,,\"$sUnmatchReason\",$testName,,\"$sMessage\"" $oldResultCsvFile]
-		} else {
-			set msgLine "$msgLine,$match_type,,,,,,$slineNum,,$sSeverity,,$testName,,\"$sMessage\""
-		}
-	} else {
-		set msgLine [setUnmatchMsgLine $msgLine "Missing report" ",,$slineNum,,,\"$sUnmatchReason\",$testName,,\"$sMessage\"" $oldResultCsvFile]
+
+#####mapdict.tcl#####
+dict set diff_dict [list [list Ac_unsync02 {Gating logic not accepted: source drives MUX select input}] [list AcSyncDataPath {ValidGate}]] Diff25-synth5_mux_and
+#####main.tcl####
+if {${runningFlag} ni "pass-Diff45-bug7 pass-Diff7-bug2_src_same_as_qual_src pass-Diff25-synth5_mux_and"} {
+	set severity_cmp [cmp_2_values "Severity" [string range $eSeverity 0 3] [string range $sSeverity 0 3] verbose]
 }
-############# diff_setup##################
-proc Diff170-diff27-logic_optimization-data_const {eToolMsgObj} {
-.......
-	if {$ret} {
-		## get const value of pins
-		set ff_set_const [get_attributes [get_pins $instance -filter {@name =="s"}] -attribute inferred_constant]
-		set ff_rst_const [get_attributes [get_pins $instance -filter {@name =="r"}] -attribute inferred_constant]
-		set mux_2_c_value [get_attributes [get_pins [get_instances $mux_2_out] -filter {@name =="c"}] -attribute inferred_constant]
-		set mux_1_c_value [get_attributes [get_pins [get_instances $mux_1_out] -filter {@name =="c"}] -attribute inferred_constant]
-		set mux_2_a1_value [get_attributes [get_pins [get_instances $mux_2_out] -filter {@name =="a1"}] -attribute inferred_constant]
-		set mux_1_a1_value [get_attributes [get_pins [get_instances $mux_1_out] -filter {@name =="a1"}] -attribute inferred_constant]
-		#### check the value of mux_1/a1 mux_1/c mux_2/a1 mux_2/c
-		if {($constant_value == "0" && $ff_set_const == "0" && $ff_rst_const != "0") || ($constant_value == "1" && $ff_rst_const == "0" && $ff_set_const != "0")} {
-			if {$mux_2_c_value != "0" && $mux_1_c_value == ""} {
-				if {$mux_2_a1_value == $mux_1_a1_value == $constant_value} {
-					return 1
-				}
-			} elseif {$mux_1_c_value == "1"} {
-				if {$constant_value != "" && $constant_value == $mux_1_a1_value} {
-					return 1
-				}
-			} elseif {$mux_1_c_value == "0"} {
-				if {$mux_2_c_value != 0 && $constant_value == $mux_2_a1_value} {
-					return 1
-				} elseif {$mux_2_c_value == "0"} {
-					return 1
-				}
-			} elseif {$mux_2_c_value == "0" && $mux_1_c_value == ""} {
-				if {$mux_1_a1_value == "0" && $constant_value == "0"} {
-					return 1
-				}
-			} else {
-				return 0
-			}
-		} else {
-			return 0
-		}
-	}
-	return 0
-}
-if {[dict get $eToolMessageObj msgId] == "SetupDataTiedToConst" && [dict get $sToolMessageObj Rule] == "Clock_info03b"} {
-	if {[false-bit $eToolMessageObj $sToolMessageObj]} {
-		dict set sToolMessageObj runningFlag pass-false-bit
-		writeSetupMsgLine ${resultCsvFileName} "" ${sToolMessageObj} ${testName} "pass" ${oldResultCsvFile}
-		lappend l_s_match_list $s
-		continue
-	}
-}
-proc false-bit {eToolMessageObj sToolMessageObj} {
-	set e_obj [lindex [dict get $eToolMessageObj objList] 0]
-	set e_const_value [lindex [dict get $eToolMessageObj objList] end]
-	set s_obj [lindex [dict get $sToolMessageObj objList] 0]
-	set s_const_value [lindex [dict get $sToolMessageObj objList] end]
-	if {$e_const_value == $s_const_value} {
-		set s_obj [reformat_s_names_setup $s_obj]
-		if {[string first $s_obj $e_obj] != -1 && $s_obj != $e_obj} {
-			return 1
-		}
-	}
-	return 0
-}
-####### compare_and_write_csv########
-if {[Ac-affected-by-data_const $a_msg]} {
-	dict set a_msg runningFlag "is affected-by-data-const"
-	writeAcMsgLine $resultCsvFileName "" $a_msg "pass-const" $oldResultCsvFile
-	continue
-}
-################ diff.tcl####################
-proc Ac-affected-by-data_const {sToolMessageObj} {
-	#### if d_pin of src or dest in missing_report is constant value in enno, give a mark
-	set src_obj [reformat_s_names [dict get $sToolMessageObj "SourceName"]]
-	set dest_obj [reformat_s_names [dict get $sToolMessageObj "DestName"]]
-	set src_instance [get_instances [get_pins [lindex [get_nets $src_obj] 0] -filter {@name=="q"}]] ### get instance of source,if s_obj is bus just check one bit
-	if {[get_pins $src_instance -filter {@name == "d"}] ne ""} {
-		if {[get_attributes [get_pins $src_instance -filter {@name == "d"}] -attribute inferred_constant] ne ""} {
-			return 1
-		}
-	}
-	set dest_instance [get_instances [get_pins [lindex [get_nets $dest_obj] 0] -filter {@name=="q"}]] # get instance of dest,if dest_obj is bus just check one bit
-	if {[get_pins $dest_instance -filter {@name == "d"}] ne ""} {
-		if {[get_attributes [get_pins $dest_instance -filter {@name == "d"}] -attribute inferred_constant] ne ""} {
+####diff.tcl#####
+proc Ac-affected-by-data_const {sTo0lMessageObj} {
+ ....
+	set dest_instance [get_instances [get_pins [lindex [get_nets $dest_obj] 0] -filter {@name=="q"}]]
+	if {[get_pins $dest_instance -filter {@name = "d"}] ne ""} {
+		if {[get_attributes [get_pins $dest_instance -filter {@name = "d"}] -attribute inferred_constant] ne ""} {
 			return 1
 		}
 	}
 	return 0
 }
 
+proc Diff25-synth5_mux_and {eToolMessageObj sToolMessageObj verbose runningFlag {s_debug 0} {e_debug 0}} {
+ set e_sourname [dict get ${eToolMessageObj} SourceName]
+ set s_sourname {*}[reformat_s_names [dict get ${sToolMessageObj} SourceName]]
+ 
+ set e_destname [dict get ${eToolMessageObj} DestName]
+ set s_destname {*}[reformat_s_names [dict get ${sToolMessageObj} DestName]]
+ 
+ set e_source_clk [dict get $eTo0lMessageObj SourceClock]
+ set s_source_clk [reformat_s_names [dict get $sToolMessageObj SourceClockNames]]
+ 
+ set e_dest_clk [dict get $eToolMessageObj DestClock]
+ set s_dest_clk [reformat_s_names [dict get $sToolMessageObj DestClockNames]]
+	if {${e_source_clk} == ${s_source_clk} && ${e_dest_clk} == ${s_dest_clk} && ${e_sourname} == ${s_sourname} && ${e_destname} == ${s_destname}} {
+		set src_linked_mux_c [get_pins [get_nets $e_sourname] -filter {@name == "c"}]
+		if {$src_linked_mux_c ne ""} {
+			set mux_instance [get_instances $src_linked_mux_c -filter {@view == "VERIFIC_MUX"}]
+			if {$mux_instance ne ""} {
+				set mux_a0_value [get_attributes [get_pins $mux_instance -filter {@name == "a0"}] -attribute inferred_constant]
+				set mux_a1_clock_domian [get_attributes [get_pins $mux_instance -filter {@name == "a0"}] -attribute data_clock_domain]
+				set e_dest_clock_domain [get_attributes [get_instances $e_destname] -attribute data_clock_domain]
+				if {$mux_a0_value == "0" && $mux_a1_clock_domian == $e_dest_clock_domain} {
+					return 1
+				}
+			}
+		}
+		return 0
+	} 
+	return 0
+}
+#######diff_setuP.cl######
+proc false-bit {eToolMessageOb sTolMessageOb} {
+ set e_obj [lindex [dict get $eToolMessageObj objList] 0]
+ set e_const_value [lindex [dict get $eToolMessageObj objList] end]
+ set s_obj [lindex [dict get $sToolMessageObj objList] 0]
+ set s_const_value [lindex [dict get $sTolMessageObj objList] end
+ if {$e_const_value == $s_const_value} {
+	if {[regexp { .} $s_obj]} {
+		set s_obj \{$s_obj\}
+	}
+	if {[get_pins [get_nets [reformat_s_names_setup $s_obj]] -filter {@name == "q"}] ne ""} {
+		set s_obj [get_instances [get_pins [get_nets [reformat_s_names_setup $s_obj]] -filter {@name == "q"}]]
+	}
+	if {[string first $s_obj $e_obj] != -1 && $s_obj != $e_obj} {
+		return 1
+	}
+ }
+ return 0
+}
 

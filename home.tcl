@@ -19,10 +19,16 @@ proc Ac-affected-by-data_const {sTo0lMessageObj} {
 
 proc Diff25-synth5_mux_and {eToolMessageObj sToolMessageObj verbose runningFlag {s_debug 0} {e_debug 0}} {
  set e_sourname [dict get ${eToolMessageObj} SourceName]
- set s_sourname {*}[reformat_s_names [dict get ${sToolMessageObj} SourceName]]
+ set result [catch {set s_sourname {*}[reformat_s_names [dict get ${sToolMessageObj} SourceName]]}]
+ if {$result} {
+	set s_sourname [reformat_s_names [dict get ${sToolMessageObj} SourceName]]
+ }
  
  set e_destname [dict get ${eToolMessageObj} DestName]
- set s_destname {*}[reformat_s_names [dict get ${sToolMessageObj} DestName]]
+ set result [catch {set s_destname {*}[reformat_s_names [dict get ${sToolMessageObj} DestName]]}]
+ if {$result} {
+	set s_destname [reformat_s_names [dict get ${sToolMessageObj} DestName]]
+}
  
  set e_source_clk [dict get $eTo0lMessageObj SourceClock]
  set s_source_clk [reformat_s_names [dict get $sToolMessageObj SourceClockNames]]

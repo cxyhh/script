@@ -1,3 +1,7 @@
+对应新泛化block修改
+	见welink截图
+考训case新的cfg
+	见welink截图
 
 增加泛化对比脚本速度，将dataTiedToConst的反标放到diff proc之前
 ---utils.tcl/Proc is_analysis------

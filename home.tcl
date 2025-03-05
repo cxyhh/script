@@ -1,5 +1,5 @@
 
-
+增加泛化对比脚本速度，将dataTiedToConst的反标放到diff proc之前
 ---utils.tcl/Proc is_analysis------
 set running_flag_col [lsearch $header_list "running_flag"]
 set running_flag [string trim [lindex [split $result ","] $running_flag_col] "\""]

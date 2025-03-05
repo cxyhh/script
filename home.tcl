@@ -1,57 +1,49 @@
 
 
- if {[dict get $eToolMessageObj msgId] == "ChyDataBusDiffEnable" && $rule == "Ac_conv04"} {
-		if {[Diff133-synth28-conv $eToolMessageObj $sToolMessageObj]} {
-			dict set eToolMessageObj runningFlag Diff133-synth28-conv
-			dict set sToolMessageObj runningFlag Diff133-synth28-conv
-			writeSetupMsgLine ${resultCsvFileName} ${eToolMessageObj} ${sToolMessageObj} ${testName} "pass" ${oldResultCsvFile}
-			lappend l_s_match_list $s
-			lappend l_e_match_list $e
-			continue
-		}
-}
+---utils.tcl/Proc is_analysis------
+set running_flag_col [lsearch $header_list "running_flag"]
+set running_flag [string trim [lindex [split $result ","] $running_flag_col] "\""]
 
-proc Diff133-synth28-conv {eToolMessageObj sToolMessageObj} {
-	set proc_name [lindex [info level 0] 0]
-	global current_time 
-	puts_debug_message start $proc_name
-	set s_reason [lindex [dict get $sToolMessageObj objList] end]
-	if {$s_reason == "different synchronization scheme used"} {
-		set s_key {*}[create_s_setup_key_list $sToolMessageObj {}]
-		set e_key {*}[create_e_setup_key_list $eToolMessageObj {}]
-		
-		set e_obj [lrange $e_key 1 end]
-		set s_obj [lrange $s_key 1 end]
-		
-		if {$e_obj == $s_obj} {
-			set e_PinList1 [dict get $eToolMessageObj PinPort1]
-			set e_PinList3 [dict get $eToolMessageObj PinPort2]
-			
-			if {$e_PinList1 ne "" && $e_PinList3 ne ""} {
-				set e_PinList1 [fold_bus_bits $e_PinList1]
-				set e_PinList3 [fold_bus_bits $e_PinList3]
-					if {[get_messages -filter {@message_id == "AcSyncDataPath" && @PinList1 == "$e_PinList1" && @PinList3 == "$e_PinList3" && @ReasonInfOList5 == "ValidGate"}] != ""} {
-						return 1
-					} 
+elseif {[regexp "SetupDataTiedToConst,.*?,pass,,,,.*" $result]} {
+return "7,$running_flag"
+}
+---main.tcl/proc writeSetupMsgLine-*..--
+global current_time e_pass_list IntegrityRstConvOnComb_pass_dict an_flag write_flag
+set fanbiao_diff_flag 0
+} elseif {${eToolMsgObj} ne "" && ${sToolMsgObj} eq ""} {
+		if {$matc_type == "pass"} {
+			set msgLine "${msgLine},${match_type},,,,$running_flag,,${testName},$eSeverity,,\"$eMessage\""
+		} else {
+			set msgLine "[setUnmatchMsgLine ${msgLine} "False report" "$running_flag,${unmatchReason},${testName},$eSeverity,,\"$eMessage\"" ${oldResultCsvFile}]"
+			if {[string match "*pass-*" $an_flag]} {
+				set fanbiao_diff_flag 1
 			}
 		}
-	}
-	return 0
+		
+		
+if {$fanbiao_diff_flag || $write_flag} {
+ record_msgLine ${resultCsvFileName} ${msgLine}
 }
+return $fanbiao_diff_flag
 
-proc Diff119-multi_reasons13-and_gate {eToolMsgObj} {
-	set ret 0
-	set setup_source [lsort [get_nets [dict get ${eToolMsgObj} PinPort1] -canonical]]
-	set setup_dest [lsort [get_nets [dict get ${eToolMsgObj} PinPort2] -canonical]]
- 
-	if {[get_pins $setup_source -filter {@name == "q"}] != "" && [get_pins $setup_dest -filter {@name == "q"}] !=""} {
-		set setup_source_pins [fold_bus_bits [get_pins $setup_source -filter {@name == "q"}]]
-		set setup_dest_pins [fold_bus_bits [get_pins $setup_dest -filter {@name == "q"}]]
-		if {[get_messages -filter {@message_id == "AcSyncDataPath" && @pinList1 == "$setup_source_pins" && @PinList3 == $setup_dest_pins && @ReasonInfoList5 == "ValidGate CGICAutoInferred"}] != ""} {
-			set ret 1
+
+--compare_and_write_csv/proc compare_setup_messages---
+global e_running_flag_map s_running_flag_map e_split_cnt_map s_split_cnt_map s_setup_map write_flag
+set write_flag 1
+
+
+if {$msgId == "SetupDataTiedToConst"} {
+	set write_flag 0
+	if {[writeSetupMsgLine ${resultCsvFileName} ${eToolMsgObj} "" ${testName} "" ${oldResultCsvFile}]} {
+			set write_flag 1
+			continue
+	} else {
+		set write_flag 1
+		if {[Diff87-synth17-data_const $eToolMsgObj]} {
+			dict set eTo0lMsgObj runningFlag pass-Diff87-synth17-data_const
+			.......
 		}
 	}
-	return $ret
 }
 
 

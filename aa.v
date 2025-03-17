@@ -29,7 +29,7 @@ generate
  end
  end
  assign proc_wait_time[j] = (cmd_type_M == 5'd1) ? proc_rel_time[j]
-		: (cmd_type_M = 5'd2) ? proc_ext_time[j]
+	 : (cmd_type_M == 5'd2) ? proc_ext_time[j]
 		: event_proc_reftime[j];
  end
 endgenerate

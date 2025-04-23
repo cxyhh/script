@@ -1,122 +1,60 @@
+####mapdict.tcl
+dict set diff_dict [list [list Ac_conv03 {}] [list ChyDiffSrcConv {}]] Diff150-report22_conv
 
-
-======main.tcl:=========
-if {[info exists an_flag] && [string match "*pass-*" $an_flag]} {
- set fanbiao_diff_flag 1
+###main.tcl
+ if {$msgId == "SetupClkNetUndefined" && $rule == "Clock_info03a" } {
+	set match_type pass
+	set false_reason ""
+	set running_flag "pass-Diff226-line8-clk"
 }
-if {$msgId == "SetupDataTiedToConst" && $rule == "Clock_info03b"} {
- set match_type pass
- set false_reason ""
- set running_flag "pass-Diff75-line_n03"
-}
-======diff_setup.tcl=========
-proc false-bit {sToolMessageObj} {
-	set s_obj [reformat_s_names_setup [lindex [dict get $sToolMessageObj objList] 0]]
-	set s_clk [reformat_s_names_setup [lindex [dict get $sToolMessageObj objList] 1]]
-	set s_const_value [lindex [dict get $sToolMessageObj objList] end]
+####diff_setup.tcl
+proc Diff150-report22_conv {eToolMessageObj sToolMessageObj verbose {s_debug 0} {e_debug 0}} {
+	set proc_name [lindex [info level 0] 0]
+	global current_time 
+	puts_debug_message start $proc_name
+		
+	set ret 0
+	set e_objs [lsort [string map {"{" "" "}" ""} [process_objs [dict get ${eToolMessageObj} objList] 0 2]]]
+	set s_objs [lsort [string map {"{" "" "}" ""} [process_objs [reformat_s_names_setup [dict get ${sToolMessageObj} objList]] 1 1]]]
+	set e_key {*}[create_e_setup_key_list ${eToolMessageObj} {}]
+	set s_key {*}[create_s_setup_key_list ${sToolMessageObj} {}]
+	set e_conv_net [lindex ${e_key} 2]
+	set s_conv_net [lindex ${s_key} 2]
 	
-	if {[get_attributes [get_messages -filter {@message_id == "SetupDataTiedToConst" && @String3 == $s_const_value && @Net2 == $s_clk}] -attribute InstanceList1] ne ""} {
-		set InstanceList [get_attributes [get_messages -filter {@message_id == "SetupDataTiedToConst" && @String3 == $s_const_value && @Net2 == $s_clk}] -attribute InstanceList1]
-		set e_nets [get_nets [join $InstanceList " "]]
-		set result [catch {set s_nets {*}[get_nets $s_obj]}]
-		if {$result} {
-			set s_nets [get_nets $s_obj]
-		}
- 
-		if {$e_nets ne "" && $s_nets ne "" && [string first $s_nets $e_nets] != -1} {
-			return 1
-		}
-	}
-	return 0
-}
-
-======compare_and_write_csv.tcl======
-regexp {.*source black-box (.*?), clocked by .* [dict get $rec Message] s_result s_result1
-if {[info exists s_result1]} {
-	set instance [lindex [get_instances [get_nets [reformat_s_names $s_result1]]] 0]
-	set clk [regsub ${instance}_ $clk ""]
-}
-if {[dict exists $rec $key_des_clk_names]} {
-	set clk [list [dict get $rec $key_des_clk_names]]
-	regexp {.*destination black-box (.*?)\(.*?\), clocked by.*} [dict get $rec Message] d_result d_result1
-	if {[info exists d_result1]} {
-		set clk [regsub ${d_result1}_ $clk ""]
-	}
-	set clk [self_get_clocks {*}[reformat_s_names $clk]]
-	if {$clk eq ""} {
-		set clk [self_get_clocks [self_get_nets {*}[reformat_s_names $clk]]]
-	}
-	if {$clk eq ""} {
-		set clk [self_get_nets {*}[reformat_s_names $clk]]
-	}
-	set clk [lsort $clk]
-	lappend sd_key $clk
-}
-
-if {$Rule == "Clock_info03b"} {
-	if {[false-bit $sToolMsgObj]} {
-		dict set sToolMsgObj runningFlag pass-false-bit
-		writeSetupMsgLine ${resultCsvFileName} "" ${sToolMsgObj} ${testName} "pass" ${oldResultCsvFile}
-		continue
-	}
-}
-
-unset message_line_dict
-
-=======Builtin_Flow.tcl====
-Propagate_Clocks,SetupClkPropagated {
-		# obj | line | file | level
-		set type [string trim [lindex $s_Obj end]]
-		if {$type == ""} {
-			set s_Obj [lrange $s_Obj 0 end-1]
-			set s_Obj "[lrange $s_Obj 1 2] [lindex $s_Obj 0]"
-		}
-		lset s_Obj 0 [reformat_s_names_setuP [string map {"," " "} [lindex $s_Obj 0]]]
-		lset s_Obj 0 [join [lsort [lindex $s_Obj 0]] ]
-		set e_obj_tmp [lsort [string trim [lindex $e_Obj 0]]]
-		if {[get_clocks $e_obj_tmp] ne ""} {
-			lset e_Obj 0 [join [get_clocks $e_obj_tmp] ]
-		} elseif {[get_clocks [get_nets $e_obj_tmp]] ne ""} {
-			lset e_Obj 0 [join [get_clocks [get_nets $e_obj_tmp]] ]
+	if {${s_conv_net} != {} && ${e_objs} == ${s_obj#}} {
+		set e_inst [lsort [get_instances [get_fanin -to [get_nets ${e_conv_net}] -tcl_list -Pin_list] -filter @view=="VERIFIC_DFFRS"]]
+		set s_inst [lsort [get_instances [get_fanin -to [get_nets ${s_conv_net}] -tcl_list -pin_list] -filter @view=="VERIFIC_DFFRS"]]
+		if {${e_inst} == ${s_inst}} {
+			set ret 1
 		} else {
-			lset e_Obj 0 [join $e_obj_tmp ]
+			set e_inst [lsort [get_instances [get_fanin -to [get_nets ${e_conv_net}] -tcl_list ] -filter @view=="VERIFIC_DFFRS"]]
+			set s_inst [lsort [get_instances [get_fanin -to [get_nets ${s_conv_net}] -tcl_list ] -filter @view=="VERIFIC_DFFRS"]]
+			if {${e_inst} == ${s_inst}} {
+				set ret 1
+			}
 		}
-		## domain
-		lset s_Obj 1 [regsub -all {^sg_virtual_} [lindex $s_Obj 1] {}]
-		set e_dom [lindex $e_Obj 1]
-		set s_dom [join [lsort [reformat_s_names_setup [lindex $s_Obj 1]]] ]
-		lset s_Obj 1 $s_dom
-		if {$type = "" && $e_dom != $s_dom && ([string map "[get_top]/ {}" $e_dom] == $s_dom || [string map "[get_top]/ {}" $s_dom] == $e_dom)} {
-		lset s_Obj 1 $e_dom
-		}
-		########
-		
-		
-Propagate_Clocks,SetupClkNotPropagated {
-		# obj | line | file | level
-		set type [sting trim [lindex $s_Obj end]]
-		if {$type == "not"} {
-			set s_Obj [lrange $s_Obj 0 end-1]
-			set s_Obj "[lrange $s_Obj 1 2] [lindex $s_Obj 0]"
-		}
-		lset s_Obj 0 [reformat_s_names_setuP [string map {"," " "} [lindex $s_Obj 0]]]
-		lset s_Obj 0 [join [lsort [lindex $s_Obj 0]] ]
-		set e_obj_tmp [lsort [string trim [lindex $e_Obj 0]]]
-		if {[get_clocks $e_obj_tmp] ne ""} {
-			lset e_Obj 0 [join [get_clocks $e_obj_tmp] ]
-		} elseif {[get_clocks [get_nets $e_obj_tmp]] ne ""} {
-			lset e_Obj 0 [join [get_clocks [get_nets $e_obj_tmp]] ]
+	}
+...
+}
+proc Diff122-bug30-conv {eToolMsgObj} {
+ ....
+ set e_nets [lsort $e_nets]
+ set dest_nets [lsort $dest_nets]
+ ...
+}
+#builtin_init.tcl
+{{FalsePathSetup} 		{WireMultiAssign}}
+{{checkSGDC_together02} {WireMultiAssign}}
+#######utils
+		###in order to deal with destination obj like "TOP.PIPE_S.U_RS .\FWD_TMO_PROC.r_pld_fd [33:0]"
+		##the first return value of regular expression is "flop TOP.PIPE_S.U_RS .FWD_TMO_PROC.r_pld_fd" in the way "regsub -all "%" $patt "(.*)" patt" 
+		##the first return value of regular expression is "flop/black-box/primary output" in the new way
+		if {$rulename == "Ac_unsync02"} {
+		if {[string match {Unsynchronized Crossing: destination primary output*} $msg_body]} {
+			"regsub "%" $patt "(primary output)" patt
 		} else {
-			lset e_Obj 0 [join $e_obj_tmp ]
+			regsub "%" $patt "(\\S+)" patt
 		}
-		## domain
-		lset s_Obj 1 [regsub -all {^sg_virtual_} [lindex $s_Obj 1] {}]
-		set e_dom [lindex $e_Obj 1]
-		set s_dom [join [lsort [reformat_s_names_setup [lindex $s_Obj 1]]] ]
-		lset s_Obj 1 $s_dom
-		if {$e_dom != $s_dom && ([string map "[get_top]/ {}" $e_dom] == $s_dom || [string map "[get_top]/ {}" $s_dom] == $e_dom)} {
-			lset s_Obj 1 $e_dom
-		}
-		########
+}
 
 

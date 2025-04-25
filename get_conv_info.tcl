@@ -1,4 +1,3 @@
-file 1
 #######get_match_conv01.tcl#######
 proc get_match_msgs_by_conv_path { sg_msg_id sg_qualifiers sg_conv_net } {
 
@@ -117,8 +116,6 @@ proc get_common_cnt { msg sg_can_qual my_can_qual } {
 	return $comm_cnt
 }
 
-
-file 2
 #####get_conv_info.tcl#####
 set current_dir [file dirname [info script]]
 source [file join $current_dir mapdict.tcl]
@@ -131,7 +128,7 @@ set debug_key 0
 # read a file to a var
 proc read_file {file_name} {
 	if {![file exists ${file_name}]} {
-		puts "<<main.tcl:read_file>> File is not existed: ${file_name}#
+		puts "<<main.tcl:read_file>> File is not existed: ${file_name}"
 		return
 	}
 	set fp [open "${file_name}" r]

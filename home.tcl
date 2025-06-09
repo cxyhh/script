@@ -1,83 +1,16 @@
 ++++utils.tcl++++
-+++(line 533)
-if {[string match {*ynchronized Crossing: destination primary output*} $msg_body]} {
-++++(prc is_analyzed)
-####in order to replace proc with mark label
-set markFlag [join [concat $running_flag $diff_basis] ";"]
-......
- } elseif {[regexp ".*?,(False|Missing) report,(yes)?,6,.*" $result]} {
-		return "6,"
-} elseif {[regexp ".*?,Unmatch,,7,.*,pass*" $result]} {
-		###in order to deal scenarios like Unmatch,7,Diff1,pass-Diff2
-		return "7,$markFlag"
-} elseif {[regexp ".*?,(False|Missing) report,(yes)?,7,.*" $result]} {
-		return "7,$diff_basis"
-}...
-} elseif {[regexp ".*?,pass,,,,.*" $result]} {
-		###in order to replace proc with mark label
-		return "7,$markFlag"
-}
+
 proc get_no_compare_proc {} {
 	return {pass-Diff123-diff19-clock_info-03 pass-Diff112-irregular7-clock_coverge 
 	pass-Diff150-report22-conv pass-Diff178-report1-clocktietoconst
 }
-}
-+++++++++setuptcl+++++++~
- set clocklist2 [string trim [lsort [dict get $eToolMessageObj ClockList2]] "{}"]
- set clocklist3 [string trim [lsort [dict get $eToolMessageObj ClockList3]] "{}"]
-...
- ######in order to deal the clock of bbox will add the black-box instance in sg
-if {[regexp {black-box} $var2]} {
-		set port2 [lsort [self_get_instances [self_get_pins $port2]]]
-		set clocks2 [regsub ${port2}_ $clocks2 ""]
-} else {
-		set port2 [lsort [self_get_nets $port2]]
-		if {$port2 == {}} {
-			set port2 [self_get_ports $port2]
-		}
-}
-set clocks2 [lsort [self_get_clocks $clocks2]]
-foreach portkey $port {
-		lappend key_list [list $msgkey $portkey [lsort [list [list $clocks2 $port2] [list $clocks1 $inst1]]]]
-}
-.....
-Ac_conv01 - Ac_conv02 {
-		# Key: Ac_conv01/Ac_conv02
-		puts_debug_message branch "rule: $rule start"
-		set csv_objs [lindex $objList 1]
-		set pinlist1 [lindex $csv_objs 0]
-		set tmp_pinlist ""
-		#foreach tmp_pin $pinlist1 {
-			#set tmp_pinlist [concat $tmp_pinlist [add_top_name [expand_bits $tmp_pin]]]
-			set tmp_pinlist [get_nets $pinlist1]
-		#}
-set net4 [lindex $objList 3]
-set pin [get_nets $tmp_pinlist -canonical]
-if {$pin == {}} {
-	set pin [get_nets {*}$tmp_pinlist -canonical]
-}
-set pin [lsort $pin]
-set net [self_get_nets $net4]
-#set dst_clk [get_clocks [lindex $csv_objs 1]]
-#set src_clk [get_clocks [lindex $csv_objs 2]]
-set dst_clk [string trim [lindex $csv_objs 1] "{}"]
-set src_clk [string trim [lindex $csv_objs 2] "{}"]
-lappend key_list [list $msgkey $pin $net $dst_clk $src_clk]
-puts_debug_message branch "rule: $rule end"
-}
-+++++++ms#$objmap+++++
-IntegrityRstConvOnComb {Net1 NetList1 NetList1 NetList1 Net2 Net2 NetList2 Net2}
+
+
 ++++mapdict.tcl++++++
 dict set se_cmd_map qualifier set_qualifier
-dict set diff_dict [list [list Ac_sync01 {Conventional multi-flop for metastability technique}] [list AcNoSyncScheme {MissingSynchronizer}]] Diff237-Diff48-UDP
-dict set diff_dict [list [list Ac_sync01 {Synchronization at And gate}] [list AcNoSyncScheme {MissingSynchronizer}]] Diff237-Diff48-UDP
-++++++++main.tcl
-++(line 811)
-if {${runningFlag} ni "pass-Diff45-bug7-cgic pass-Diff7-bug2_src_same_as_qual_src pass-Diff25-synth5_mux_and pass-Diff237-Diff48-UDP"} {
-+++(line 831)
-if {$runningFlag != "pass-Diff237-Diff48-UDP" &&([dict exists ${sToolMsgObj} diff71] || [dict exists ${eToolMsgObj} diff71])} {
-++++(line 1131)
-if {${running_flag} == "pass-Diff150-report22-conv" || ${running_flag} == "pass-diff160-line_no7" || ${running_flag} == "pass-Diff226-line8-clk" || ${running_flag} == "pass-Diff178-report1-clocktietoconst"} {
+dict set diff_dict [list [list Ac_sync02 {Conventional multi-flop for metastability technique}] [list AcNoSyncScheme {MissingSynchronizer}]] Diff237-Diff48-UDP
+dict set diff_dict [list [list Ac_sync02 {Synchronization at And gate}] [list AcNoSyncScheme {MissingSynchronizer}]] Diff237-Diff48-UDP
+
 ++++++++++diff.tcl++++++
 proc diff91-report13-clock_clocklist {eToolMessageObj sToolMessageObj verbose {s_debug 0} {e_debug 0}} {
 		upvar $verbose l_verbose
@@ -250,44 +183,6 @@ proc Diff237-Diff48-UDP {eToolMessageObj sToolMessageObj verbose runningFlag {s_
 		return 0
 }
 +++diff_setup.tcl+++
-} elseif {[dict get $eToolMessageObj msgId] in "ChySameSrcConvIncSeq ChySameSrcConvExcSeq ChyDiffSrcConv" && $rule in "Ac_conv01 Ac_conv02 Ac_conv03"} {
-		if {[similar_conv $eToolMessageObj $sToolMessageObj reason]} {
-				dict set eToolMessageObj unmatchReason $reason
-				dict set sToolMessageObj unmatchReason $reason
-				writeSetupMsgLine $resultCsvFileName {} $sToolMessageObj ${testName} {} $oldResultCsvFile
-				writeSetupMsgLine $resultCsvFileName $eToolMessageObj {} ${testName} {} $oldResultCsvFile
-				lappend l_s_match_list $s
-				lappend l_e_match_list $e
-				continue
-}
-proc Diff178-report1-clocktietoconst {eToolMessageObj sToolMessageObj verbose {s_debug 0} {e_debug 0}} {
-		set proc_name [lindex [info level 0] 0]
-		global current_time 
-		puts_debug_message start $proc_name
-		
-		set ret 0
-		set e_pin [lindex [dict get $eToolMessageObj objList] 0]
-		set s_pin [reformat_s_names_setup [list [lindex [dict get $sToolMessageObj objList] 0]]]
-		set e_net [get_nets $e_pin -canonical]
-		set s_net [get_nets $s_pin -canonical]
-		
-		
-		if {$e_net eq $s_net} {
-				set e_flop [lindex [dict get $eToolMessageObj objList] 1]
-				set s_flop [reformat_s_names_setup [list [lindex [dict get $sToolMessageObj objList] 1]]]
-				
-				set e_clk_pin [get_pins [get_instances $e_flop] -filter {@name == "clk"}]
-				set s_clk_pin [get_pins [get_instances $s_flop] -filter {@name == "clk"}]
-				
-				set e_clk_net [get_nets $e_clk_pin -canonical]
-				set s_clk_net [get_nets $s_clk_pin -canonical]
-				if {$e_clk_net eq $s_clk_net} {
-						set ret 1
-				}
-		}
-		puts_debug_message end $proc_name
-		return $ret
-}
 proc similar_conv {eToolMessageObj sToolMessageObj reason} {
 		upvar $reason l_reason
 		set e_objs [lsort [get_nets [lindex [dict get ${eToolMessageObj} objList] 0] -canonical]]
@@ -328,28 +223,7 @@ proc similar_conv {eToolMessageObj sToolMessageObj reason} {
 }
 
 ++++compare_and_write_csv+++
-+++(line 867)
-set BB_n [regexp -all -inline {([\w/]+)/[^/]+\((.*)\)} $_item]
 
-+++(line 949 proc create_s_sd_key )
-if {[dict exists $rec $key_des_clk_names]} {
-		set clk [list [dict get $rec $key_des_clk_names]]
-		set result [catch {set clk {*}[reformat_s_names $clk]}]
-		if {${result}} {
-				set clk [reformat_s_names $clk]
-		}
-		regexp {.*destination black-box (.*?)(\(.*?\))?, clocked by.*} [regsub {\.\\} [dict get $rec Message] {.}] d_result d_result1
-		if {[info exists d_result1] && [regexp {vclk} $clk]} {
-				set dest_inst [lindex [get_instances [reformat_s_names $d_result1] -filter {@is_black_box ==1}] 0]
-				if {$dest_inst == ""} {
-						set dest_inst [lindex [get_instances [get_nets [reformat_s_names $d_result1]] -filter {@is_black_box ==1}] 0]
-				}
-				set clk [regsub ${dest_inst}_ $clk ""]
-		}
-#if {[get_instances [get_nets $dest]] ne "" && [get_instances [get_nets $dest] -filter {@is_black_box ==1}] ne ""} {
-# set dest_instance [lindex [get_instances [get_nets $dest] -filter {@is_black_box ==1}] 0]
-# set clk [regsub ${dest_instance}_ $clk ""]
-# }
  ......
 set diff_result 0
 set diff59_flag [Diff59-report4-multi_bits_merge $eToolMessageObj $sToolMessageObj l_verbose runningFlag "" ""] 
@@ -365,57 +239,3 @@ if {$diff59_flag ne 0} {
 	}
 }
  .....
- 
- 
-# create source key with the src objs
-proc create_sd_src_key {rec} {
-		set proc_name [lindex [info level 0] 0]
-		global current_time
-		puts_debug_message start $proc_name
-		set time1 $current_time
-		global key_src_obj
-		set dbg_cnt [dict get $rec DebugCount]
-		set sd_key {}
-		if {[dict exists $rec $key_src_obj]} {
-				lappend sd_key [dict get $rec $key_src_obj]
-		}
-		puts_debug_message end $proc_name
-		set time2 $current_time
-		get_proc_time $proc_name $time1 $time2
-		return $sd_key
-}
-
-# create enno message map with src obj
-		proc create_e_src_map {se_list} {
-		set proc_name [lindex [info level 0] 0]
-		global current_time
-		puts_debug_message start $proc_name
-		set time1 $current_time
-		set sd_map [dict create]
-		for {set i 0} {$i < [llength $se_list]} {incr i} {
-			set rec [lindex $se_list $i]
-			set sd_key [create_sd_src_key $rec]
-			dict lappend sd_map $sd_key $i
-		}
-		puts_debug_message end $proc_name
-		set time2 $current_time
-		get_proc_time $proc_name $time1 $time2
-		return $sd_map
-}
-+++++(proc eliminate_match)
-set e_src_map [create_e_src_map $l_e_list]
-		####for diff237
-		set e_src_key [join [lindex [split $k " "] 0] " "]
-		if {[dict exists $e_src_map $e_src_key]} {
-			dict set s_src_map $e_src_key $v
-			if {[find_diff $e_src_key $s_src_map l_s_list $e_src_map l_e_list sm_list em_list 1]} {
-					foreach i $sm_list {
-							lappend s_match_list $i
-					}
-					foreach i $em_list {
-							lappend e_match_list $i
-					}
-			}
-			continue
-		}
-

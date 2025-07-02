@@ -21,6 +21,42 @@ acReasonMap
 Diff178-report1*missing
 
 relace
+
+
+
+proc Ac-affected-by-data_const {sToolMessageObj runningFlag} {
+	upvar $runningFlag l_runningFlag
+	set src_ret 0
+	set dest_ret 0
+	set const_src ""
+	set const_dest ""
+	set src_obj [reformat_s_names [dict get $sToolMessageObj "SourceName"]]
+	set dest_obj [reformat_s_names [dict get $sToolMessageObj "DestName"]]
+	
+	####check if DFF
+	if {[get_instances [get_attributes [get_nets $src_obj] -attributes dbg_drivers] -filter {@view == "VERIFIC_DFFRS"}] ne ""} {
+		####check if constant
+		if {[get_attributes [get_nets $src_obj] -attributes inferred_constant] ne ""} {
+			lappend const_src [get_nets $src_obj -filter {@inferred_constant ne ""}]
+			set src_ret 1
+		}
+	}
+	if {[get_instances [get_attributes [get_nets $dest_obj] -attributes dbg_drivers] -filter {@view == "VERIFIC_DFFRS"}] ne ""} {
+		if {[get_attributes [get_nets $dest_obj] -attributes inferred_constant] ne ""} {
+			lappend const_dest [get_nets $dest_obj -filter {@inferred_constant ne ""}]
+			set dest_ret 1
+		}
+	}
+		
+	if {[expr $src_ret + $dest_ret] > 0} {
+		set const_inst [concat $const_src $const_dest]
+		set l_runningFlag "affected-by-data-const $const_inst"
+		return 1
+	}
+	return 0
+}
+
+
 +++utils
 # if the msg_line marked as analyzed sign in the oldResultCsvFile or not
 proc is_analyzed {oldResultCsvFile msg_line} {

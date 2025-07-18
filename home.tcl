@@ -1,23 +1,42 @@
-
-proc Diff178-report1-clocktietoconst-missing {sToolMessageObj} {
-set proc_name [lindex [info level 0] 0]
-global current_time 
-puts_debug_message start $proc_name
-set ret 0
- set s_clk [reformat_s_names_setup [list [lindex [dict get $sToolMessageObj objList] 0]]]
- 
- if {[get_attributes [get_nets $s_clk] -attributes is_const] eq "const"} {
+proc find_fanout_quailfier {pin_list} {
+	set quailifers [get_instances $pin_list]
 	set ret 1
-}
-puts_debug_message end $proc_name
-return $ret
-}
-
-if {$Rule == "Clock_info03c"} {
-	if {[Diff178-report1-clocktietoconst-missing $sToolMsgObj]} {
-		dict set sToolMsgObj runningFlag pass-Diff178-report1-clocktietoconst
-		writeSetupMsgLine ${resultCsvFileName} "" ${sToolMsgObj} ${testName} "pass" ${oldResultCsvFile}
-		continue
+	foreach ff $quailifers {
+		set ac_sync_flop_number [get_param cdc.ac_sync_flop_number]
+		for {set i 1} {$i < $ac_sync_flop_number} {incr i} {
+			if {$ret} {
+				set quai_dest [get_instances [get_fanout -from [get_instances $#ef] -tcl_list -endpoints_only] -filter {@view = "VERIFIC_DFFRS"}]
+				regsub "$ff" $quai_dest "" quai_dest
+				if {$quai_dest ne "" && [llength $quai_dest] ne 1} {
+					red "$ff is not considered as quailifer"
+					set ret 0
+					continue
+				} else {
+					set ff $quai_dest
+				}
+			}
+		}
+		if {$quai_dest ne "" && $ret} {
+			set quai_dest_qpin {*}[get_pins [get_instances $quai_dest] -filter {@name == "q"}]
+				if {[get_messages -filter {@message_id = "AcUnsyncCtrlPath" && @Port1 == $quai_dest_qpin || @Pin1 = $quai_dest_qpin || @PortList1 == $quai_dest_qpin || @PinList1 == $quai_dest_qpin}] ne ""} {
+					blue "$ff is what we are looking for"
+				} elseif {[get_messages -filter {@message_id == "AcNoSyncScheme" && @Port1 == $quai_dest_qpin || @Pin1 == $quai_dest_qpin || @PortList1 == $quai_dest_qpin || @PinList1 == $quai_dest_qpin}] ne ""} {
+					blue "$ff is what we are looking for"
+				} elseif {[get_messages -filter {@message_id = "AcUnsyncDataPath" && @Port1 == $quai_dest_qpin || @Pin1 == $quai_dest_qpin || @PortList1 == $quai_dest_qpin || @PinList1 == $quai_dest_qpin}] ne ""} {
+					blue "$ff is what we are looking for"
+				} elseif {[get_messages -filter {@message_id = "AcSyncDataPath" && @Port1 = $quai_dest_qpin || @Pin1 == $quai_dest_qpin || @PortList1 == $quai_dest_qpin || @PinList1 == $quai_dest_qpin}] ne ""} {
+					blue "$ff is what we are looking for"
+				} elseif {[get_messages -filter {@message_id == "AcSyncCtrlPath" && @Port1 == $quai_dest_qpin || @Pin1 == $quai_dest_qpin || @PortList1 == $quai_dest_qpin || @PinList1 == $quai_dest_qpin}] ne ""} {
+					blue "$ff is what we are looking for"
+				} else {
+					puts "$ff is not diff122"
+					continue 
+				}
+		} else {
+				puts "$ff is not diff122"
+				continue
+		}
 	}
-}
+	puts "proc done"
+} 
 

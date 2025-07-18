@@ -18,13 +18,13 @@ proc find_fanout_quailfier {pin_list} {
 		}
 		if {$quai_dest ne "" && $ret} {
 			set quai_dest_qpin {*}[get_pins [get_instances $quai_dest] -filter {@name == "q"}]
-				if {[get_messages -filter {@message_id = "AcUnsyncCtrlPath" && @Port1 == $quai_dest_qpin || @Pin1 = $quai_dest_qpin || @PortList1 == $quai_dest_qpin || @PinList1 == $quai_dest_qpin}] ne ""} {
+				if {[get_messages -filter {@message_id = "AcUnsyncCtrlPath" && @Port1 == $quai_dest_qpin || @Pin1 == $quai_dest_qpin || @PortList1 == $quai_dest_qpin || @PinList1 == $quai_dest_qpin}] ne ""} {
 					blue "$ff is what we are looking for"
 				} elseif {[get_messages -filter {@message_id == "AcNoSyncScheme" && @Port1 == $quai_dest_qpin || @Pin1 == $quai_dest_qpin || @PortList1 == $quai_dest_qpin || @PinList1 == $quai_dest_qpin}] ne ""} {
 					blue "$ff is what we are looking for"
-				} elseif {[get_messages -filter {@message_id = "AcUnsyncDataPath" && @Port1 == $quai_dest_qpin || @Pin1 == $quai_dest_qpin || @PortList1 == $quai_dest_qpin || @PinList1 == $quai_dest_qpin}] ne ""} {
+				} elseif {[get_messages -filter {@message_id == "AcUnsyncDataPath" && @Port1 == $quai_dest_qpin || @Pin1 == $quai_dest_qpin || @PortList1 == $quai_dest_qpin || @PinList1 == $quai_dest_qpin}] ne ""} {
 					blue "$ff is what we are looking for"
-				} elseif {[get_messages -filter {@message_id = "AcSyncDataPath" && @Port1 = $quai_dest_qpin || @Pin1 == $quai_dest_qpin || @PortList1 == $quai_dest_qpin || @PinList1 == $quai_dest_qpin}] ne ""} {
+				} elseif {[get_messages -filter {@message_id == "AcSyncDataPath" && @Port1 == $quai_dest_qpin || @Pin1 == $quai_dest_qpin || @PortList1 == $quai_dest_qpin || @PinList1 == $quai_dest_qpin}] ne ""} {
 					blue "$ff is what we are looking for"
 				} elseif {[get_messages -filter {@message_id == "AcSyncCtrlPath" && @Port1 == $quai_dest_qpin || @Pin1 == $quai_dest_qpin || @PortList1 == $quai_dest_qpin || @PinList1 == $quai_dest_qpin}] ne ""} {
 					blue "$ff is what we are looking for"
